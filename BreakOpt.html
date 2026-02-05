@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Break Optimizer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Inter,system-ui;background:radial-gradient(circle at top,#0f172a,#020617);display:flex;align-items:center;justify-content:center;padding:24px}
+.app{max-width:900px;width:100%;background:#0b1220;border-radius:22px;color:white;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+header{padding:28px;border-bottom:1px solid rgba(255,255,255,.06)}
+main{padding:24px 28px}
+.section-title{font-size:13px;color:#cbd5f5;margin-bottom:10px}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+input{background:#020617;border:1px solid rgba(255,255,255,.15);border-radius:14px;color:white;padding:14px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.type{background:#020617;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;text-align:center;cursor:pointer}
+.type.active{border-color:#22d3ee}
+.type i{font-size:22px;color:#22d3ee;margin-bottom:6px}
+.type b{display:block}
+.type small{display:block;color:#94a3b8;margin-top:6px}
+.actions{display:flex;gap:12px;margin-bottom:18px}
+.take{flex:1;border:none;border-radius:16px;font-weight:800;padding:16px;background:linear-gradient(135deg,#22d3ee,#22c55e);color:#020617;cursor:pointer}
+.reset{width:54px;border-radius:16px;background:#020617;color:white;border:1px solid rgba(255,255,255,.2); cursor:pointer}
+.result{display:none;margin-bottom:18px}
+.big-zone{background:#020617;border-radius:20px;padding:28px;text-align:center}
+.countdown{font-size:56px;font-weight:900;color:#22d3ee}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px}
+th{color:#94a3b8;border-bottom:1px solid rgba(255,255,255,.1)}
+td{border-bottom:1px solid rgba(255,255,255,.05)}
+.bin{color:#ef4444;cursor:pointer}
+footer{text-align:center;padding:14px;color:#64748b;font-size:12px;border-top:1px solid rgba(255,255,255,.06)}
+/* Countdown glow */
+
+/* Break cards spacing fix */
+.type b{
+  margin-top:6px;
+}
+
+/* Style for exhausted break types */
+.type.disabled {
+  opacity: 0.5;
+}
+
+.type small{
+  display:block;
+  margin-top:4px;
+}
+
+/* Buttons alignment */
+.time-row button{
+  min-height:48px;
+}
+
+/* Table hover */
+tbody tr:hover{
+  background:rgba(255,255,255,.03);
+}
+
+/* Trash hover */
+.bin:hover{
+  transform:scale(1.15);
+}
+
+@media(max-width:640px){.types{grid-template-columns:1fr}.time-row{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header style="border: #020617; padding-bottom: 0; margin-bottom: 12px; ">
+<img src="./TEP.PA_BIG.D-b066ba63.png" alt="TP Logo" style="width:350px; margin: 12px auto; display: block;">
+<style>
+  /* 1. THIS IS THE KEY: It allows browsers to animate to 'auto' height */
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  .premium-details {
+    text-align: center;
+    margin: 12px auto;
+    font-family: 'Segoe UI', sans-serif;
+    color: #94a3b8;
+    max-width: 750px;
+    cursor: pointer;
+  }
+
+  summary {
+    list-style: none;
+    font-weight: bold;
+    outline: none;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  /* 2. TARGET THE CONTENT AREA DIRECTLY */
+  details::details-content {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    /* This controls the ultra-slow slide down */
+    transition: height 1.5s cubic-bezier(0.33, 1, 0.68, 1), 
+                opacity 1.5s ease;
+  }
+
+  /* 3. WHEN OPEN, SLIDE TO AUTO HEIGHT */
+  details[open]::details-content {
+    height: auto;
+    opacity: 1;
+  }
+
+  .arrow {
+    font-size: 0.7em;
+    margin-left: 8px;
+    transition: transform 0.6s ease;
+  }
+
+  details[open] .arrow {
+    transform: rotate(180deg);
+  }
+
+  p {
+    margin: 0;
+    padding: 20px;
+    line-height: 1.8;
+  }
+</style>
+
+<details class="premium-details">
+  <summary>
+    Break Optimizer and Scheduler 
+    <span class="arrow">▼</span>
+  </summary>
+  <p>
+    Insert your name and CXone ID → Determine the type of the break and take it. 
+    It will be scheduled automatically in <strong>EST time</strong> and you will 
+    be informed when to return from your break with a timer to countdown the remaining time.
+  </p>
+</details>
+</header>
+
+<main>
+
+<div class="section-title">Employee Info</div>
+<div class="time-row">
+<input id="empName" placeholder="Employee Name">
+<input id="cxoneId" placeholder="CXone ID">
+</div>
+
+<div class="section-title">Break type</div>
+
+<div class="types">
+<div class="type active" data-min="15" data-type="break">
+<i class="fa-solid fa-mug-hot"></i>
+<b>Break</b>
+<small>15 mins (2 left)</small>
+</div>
+
+<div class="type" data-min="30" data-type="lunch">
+<i class="fa-solid fa-burger"></i>
+<b>Lunch</b>
+<small>30 mins (1 left)</small>
+</div>
+
+<div class="type" data-min="15" data-type="accommodation">
+<i class="fa-solid fa-book"></i>
+<b>Accommodation</b>
+<small>15 mins (1 left)</small>
+</div>
+</div>
+
+<div class="actions">
+<button class="take" onclick="takeIt()">Take it</button>
+<button class="reset" onclick="resetDay()"><i class="fa-solid fa-arrow-rotate-right"></i></button>
+</div>
+
+<div class="result" id="result">
+<div class="zone" style="text-align:center">
+  <h3 style="color:#94a3b8;font-size:14px">Remaining Time</h3>
+
+  <div id="countdown" style="
+    font-size:56px;
+    font-weight:800;
+    letter-spacing:2px;
+    margin:12px 0;
+    background:linear-gradient(135deg,#22d3ee,#22c55e);
+    -webkit-background-clip:text;
+    color:transparent;
+  ">00:00</div>
+
+  <div id="egyptReturn" style="color:#94a3b8;font-size:14px;font-weight: bold;">
+    Return back at —
+  </div>
+</div>
+
+</div>
+
+<div class="section-title">Scheduled Breaks </div>
+<hr style="border-color:rgba(255,255,255,.1);margin-bottom:12px">
+
+<table id="logTable">
+<thead>
+<tr>
+<th>Date (Canada)</th>
+<th>Name</th>
+<th>CXone</th>
+<th>Type</th>
+<th>Start</th>
+<th>End</th>
+<th></th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</main>
+
+<footer>Break Optimizer • Powered by Hazem 2026 ©</footer>
+
+</div>
+
+<script>
+const empName = document.getElementById("empName");
+const cxoneId = document.getElementById("cxoneId");
+const countdown = document.getElementById("countdown");
+const result = document.getElementById("result");
+const logTable = document.getElementById("logTable");
+
+let selectedMinutes=15,selectedType="break",endTime,timer;
+
+const limits={break:2,lunch:1,accommodation:1};
+const counters={break:0,lunch:0,accommodation:0};
+
+const egyptFmt = new Intl.DateTimeFormat("en-US",{
+  hour:"2-digit",
+  minute:"2-digit",
+  hour12:true,
+  timeZone:"Africa/Cairo"
+});
+
+const canadaFmt=new Intl.DateTimeFormat("en-US",{hour:"2-digit",minute:"2-digit",hour12:true,timeZone:"America/Toronto"});
+const canadaDateFmt=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Toronto",year:"numeric",month:"2-digit",day:"2-digit"});
+
+// card select
+document.querySelectorAll(".type").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".type").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    selectedMinutes=+t.dataset.min;
+    selectedType=t.dataset.type;
+  };
+});
+
+function takeIt(){
+  // if(!empName.value.trim() || !cxoneId.value.trim()){
+  //   alert("Enter employee name and CXone ID");
+  //   return;
+  // }
+
+  if(counters[selectedType]>=limits[selectedType]){ 
+    alert("Daily limit reached");
+    return;
+  }
+
+  const start = new Date();
+  endTime = new Date(start.getTime() + selectedMinutes*60000);
+  document.getElementById("egyptReturn").innerText =
+  "Return back at " + egyptFmt.format(endTime) + " (Egypt)";
+
+
+  addRow(selectedType,start,endTime);
+  startCountdown();
+  result.style.display="block";
+}
+
+// countdown
+function startCountdown(){
+  clearInterval(timer);
+
+  timer=setInterval(()=>{
+    const diff=endTime-new Date();
+    if(diff<=0){
+      countdown.innerText="00:00";
+      clearInterval(timer);
+      return;
+    }
+    const m=Math.floor(diff/60000);
+    const s=Math.floor(diff%60000/1000);
+    countdown.innerText=`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  },500);
+}
+
+// add table row
+function addRow(type,start,end){
+  counters[type]++;
+
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+  <td>${canadaDateFmt.format(start)}</td>
+  <td>${empName.value}</td>
+  <td>${cxoneId.value}</td>
+  <td>${type}</td>
+  <td>${canadaFmt.format(start)}</td>
+  <td>${canadaFmt.format(end)}</td>
+  <td><i class="fa-solid fa-trash bin"></i></td>
+  `;
+
+  tr.querySelector(".bin").onclick=()=>{
+    tr.remove();
+    counters[type]--;
+    updateHints();
+  };
+
+  logTable.querySelector("tbody").appendChild(tr);
+  updateHints();
+}
+
+// update cards
+function updateHints() {
+  document.querySelectorAll(".type").forEach(t => {
+    const typeKey = t.dataset.type;
+    const left = limits[typeKey] - counters[typeKey];
+    
+    // Update the text hint
+    t.querySelector("small").innerText = `${t.dataset.min} mins (${left} left)`;
+
+    // If no breaks are left, add the disabled class
+    if (left <= 0) {
+      t.classList.add("disabled");
+      t.classList.remove("active"); // Ensure it's not highlighted as active
+    } else {
+      t.classList.remove("disabled");
+    }
+  });
+}
+
+// reset
+function resetDay(){
+  if(!confirm("Clear today?")) return;
+  location.reload();
+}
+</script>
+
+
+</body>
+</html>
